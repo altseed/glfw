@@ -143,7 +143,12 @@ static GLFWbool parseMapping(_GLFWmapping* mapping, const char* string)
         { "leftx",         mapping->axes + GLFW_GAMEPAD_AXIS_LEFT_X },
         { "lefty",         mapping->axes + GLFW_GAMEPAD_AXIS_LEFT_Y },
         { "rightx",        mapping->axes + GLFW_GAMEPAD_AXIS_RIGHT_X },
-        { "righty",        mapping->axes + GLFW_GAMEPAD_AXIS_RIGHT_Y }
+        { "righty",        mapping->axes + GLFW_GAMEPAD_AXIS_RIGHT_Y },
+
+        {"+lefty", mapping->buttons + GLFW_GAMEPAD_BUTTON_DPAD_UP},
+        {"+leftx", mapping->buttons + GLFW_GAMEPAD_BUTTON_DPAD_RIGHT},
+        {"-lefty", mapping->buttons + GLFW_GAMEPAD_BUTTON_DPAD_DOWN},
+        {"-leftx", mapping->buttons + GLFW_GAMEPAD_BUTTON_DPAD_LEFT}
     };
 
     length = strcspn(c, ",");
@@ -168,9 +173,11 @@ static GLFWbool parseMapping(_GLFWmapping* mapping, const char* string)
 
     while (*c)
     {
-        // TODO: Implement output modifiers
-        if (*c == '+' || *c == '-')
-            return GLFW_FALSE;
+        // set fallback for '+lefty' etc, to use Joy-Con like Controller. (by ALtseed team)
+
+        // // TODO: Implement output modifiers
+        // if (*c == '+' || *c == '-')
+        //     return GLFW_FALSE;
 
         for (i = 0;  i < sizeof(fields) / sizeof(fields[0]);  i++)
         {
