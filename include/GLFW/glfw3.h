@@ -4953,6 +4953,16 @@ GLFWAPI GLFWscrollfun glfwSetScrollCallback(GLFWwindow* window, GLFWscrollfun ca
  */
 GLFWAPI GLFWdropfun glfwSetDropCallback(GLFWwindow* window, GLFWdropfun callback);
 
+/*!
+ * for hid
+*/
+GLFWAPI const wchar_t* glfwJoystickGetProductName(int jid);
+
+/*!
+ * for hid
+*/
+GLFWAPI const wchar_t* glfwJoystickGetSerialNumberStr(int jid);
+
 /*! @brief Returns whether the specified joystick is present.
  *
  *  This function returns whether the specified joystick is present.

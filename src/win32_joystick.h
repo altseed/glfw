@@ -46,6 +46,9 @@ typedef struct _GLFWjoystickWin32
     IDirectInputDevice8W*   device;
     DWORD                   index;
     GUID                    guid;
+
+    // for hid
+    WCHAR                   productName[MAX_PATH];
 } _GLFWjoystickWin32;
 
 

@@ -482,6 +482,9 @@ static BOOL CALLBACK deviceCallback(const DIDEVICEINSTANCE* di, void* user)
     js->win32.objects = data.objects;
     js->win32.objectCount = data.objectCount;
 
+    // for hid
+    memcpy(js->win32.productName, di->tszProductName, sizeof(wchar_t)* MAX_PATH);
+    
     _glfwInputJoystick(js, GLFW_CONNECTED);
     return DIENUM_CONTINUE;
 }

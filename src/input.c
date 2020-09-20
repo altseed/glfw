@@ -921,6 +921,53 @@ GLFWAPI GLFWdropfun glfwSetDropCallback(GLFWwindow* handle, GLFWdropfun cbfun)
     return cbfun;
 }
 
+GLFWAPI const wchar_t* glfwJoystickGetProductName(int jid)
+{
+#ifdef _WIN32
+    _GLFWjoystick* js;
+
+    assert(jid >= GLFW_JOYSTICK_1);
+    assert(jid <= GLFW_JOYSTICK_LAST);
+
+    _GLFW_REQUIRE_INIT_OR_RETURN(GLFW_FALSE);
+
+    if (jid < 0 || jid > GLFW_JOYSTICK_LAST)
+    {
+        _glfwInputError(GLFW_INVALID_ENUM, "Invalid joystick ID %i", jid);
+        return NULL;
+    }
+
+    js = _glfw.joysticks + jid;
+    return js->win32.productName;
+
+#else
+    return NULL;
+#endif
+}
+
+GLFWAPI const wchar_t* glfwJoystickGetSerialNumberStr(int jid)
+{
+#ifdef _WIN32
+    return NULL;
+#else
+    _GLFWjoystick* js;
+
+    assert(jid >= GLFW_JOYSTICK_1);
+    assert(jid <= GLFW_JOYSTICK_LAST);
+
+    _GLFW_REQUIRE_INIT_OR_RETURN(GLFW_FALSE);
+
+    if (jid < 0 || jid > GLFW_JOYSTICK_LAST)
+    {
+        _glfwInputError(GLFW_INVALID_ENUM, "Invalid joystick ID %i", jid);
+        return NULL;
+    }
+
+    js = _glfw.joysticks + jid;
+    return js->serialNumberStr;
+#endif
+}
+
 GLFWAPI int glfwJoystickPresent(int jid)
 {
     _GLFWjoystick* js;
