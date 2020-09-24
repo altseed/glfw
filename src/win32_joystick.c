@@ -190,7 +190,7 @@ static int compareJoystickObjects(const void* first, const void* second)
 // Checks whether the specified device supports XInput
 // Technique from FDInputJoystickManager::IsXInputDeviceFast in ZDoom
 //
-static GLFWbool supportsXInput(const GUID* guid)
+static GLFWbool supportsXInput(const GUID* guid, int* found)
 {
     UINT i, count = 0;
     RAWINPUTDEVICELIST* ridl;
@@ -243,6 +243,10 @@ static GLFWbool supportsXInput(const GUID* guid)
         name[sizeof(name) - 1] = '\0';
         if (strstr(name, "IG_"))
         {
+            if (found != NULL)
+            {
+                *found = i;
+            }
             result = GLFW_TRUE;
             break;
         }
@@ -364,12 +368,11 @@ static BOOL CALLBACK deviceCallback(const DIDEVICEINSTANCE* di, void* user)
         }
     }
 
-    if (supportsXInput(&di->guidProduct))
+    int foundInd = 0;
+    if (supportsXInput(&di->guidProduct, &foundInd))
     {
-        if (js != NULL)
-        {
-            memcpy(js->win32.productName, di->tszProductName, sizeof(wchar_t) * MAX_PATH);
-        }
+        _GLFWjoystick* jsx = _glfw.joysticks + foundInd;
+        memcpy(jsx->win32.productName, di->tszProductName, sizeof(wchar_t) * MAX_PATH);
         return DIENUM_CONTINUE;
     }
 
