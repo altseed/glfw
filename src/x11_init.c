@@ -813,11 +813,15 @@ static GLFWbool initExtensions(void)
                               XkbGroupStateMask, XkbGroupStateMask);
     }
 
+    if (_glfw.hints.init.x11.xcbVulkanSurface)
+    {
 #if defined(__CYGWIN__)
-    _glfw.x11.x11xcb.handle = _glfw_dlopen("libX11-xcb-1.so");
+        _glfw.x11.x11xcb.handle = _glfw_dlopen("libX11-xcb-1.so");
 #else
-    _glfw.x11.x11xcb.handle = _glfw_dlopen("libX11-xcb.so.1");
+        _glfw.x11.x11xcb.handle = _glfw_dlopen("libX11-xcb.so.1");
 #endif
+    }
+
     if (_glfw.x11.x11xcb.handle)
     {
         _glfw.x11.x11xcb.GetXCBConnection = (PFN_XGetXCBConnection)
@@ -847,6 +851,35 @@ static GLFWbool initExtensions(void)
                                     &_glfw.x11.xrender.minor))
             {
                 _glfw.x11.xrender.available = GLFW_TRUE;
+            }
+        }
+    }
+
+#if defined(__CYGWIN__)
+    _glfw.x11.xshape.handle = _glfw_dlopen("libXext-6.so");
+#else
+    _glfw.x11.xshape.handle = _glfw_dlopen("libXext.so.6");
+#endif
+    if (_glfw.x11.xshape.handle)
+    {
+        _glfw.x11.xshape.QueryExtension = (PFN_XShapeQueryExtension)
+            _glfw_dlsym(_glfw.x11.xshape.handle, "XShapeQueryExtension");
+        _glfw.x11.xshape.ShapeCombineRegion = (PFN_XShapeCombineRegion)
+            _glfw_dlsym(_glfw.x11.xshape.handle, "XShapeCombineRegion");
+        _glfw.x11.xshape.QueryVersion = (PFN_XShapeQueryVersion)
+            _glfw_dlsym(_glfw.x11.xshape.handle, "XShapeQueryVersion");
+        _glfw.x11.xshape.ShapeCombineMask = (PFN_XShapeCombineMask)
+            _glfw_dlsym(_glfw.x11.xshape.handle, "XShapeCombineMask");
+
+        if (XShapeQueryExtension(_glfw.x11.display,
+            &_glfw.x11.xshape.errorBase,
+            &_glfw.x11.xshape.eventBase))
+        {
+            if (XShapeQueryVersion(_glfw.x11.display,
+                &_glfw.x11.xshape.major,
+                &_glfw.x11.xshape.minor))
+            {
+                _glfw.x11.xshape.available = GLFW_TRUE;
             }
         }
     }
@@ -1122,6 +1155,8 @@ int _glfwPlatformInit(void)
         _glfw_dlsym(_glfw.x11.xlib.handle, "XCreateFontCursor");
     _glfw.x11.xlib.CreateIC = (PFN_XCreateIC)
         _glfw_dlsym(_glfw.x11.xlib.handle, "XCreateIC");
+    _glfw.x11.xlib.CreateRegion = (PFN_XCreateRegion)
+        _glfw_dlsym(_glfw.x11.xlib.handle, "XCreateRegion");
     _glfw.x11.xlib.CreateWindow = (PFN_XCreateWindow)
         _glfw_dlsym(_glfw.x11.xlib.handle, "XCreateWindow");
     _glfw.x11.xlib.DefineCursor = (PFN_XDefineCursor)
@@ -1132,6 +1167,8 @@ int _glfwPlatformInit(void)
         _glfw_dlsym(_glfw.x11.xlib.handle, "XDeleteProperty");
     _glfw.x11.xlib.DestroyIC = (PFN_XDestroyIC)
         _glfw_dlsym(_glfw.x11.xlib.handle, "XDestroyIC");
+    _glfw.x11.xlib.DestroyRegion = (PFN_XDestroyRegion)
+        _glfw_dlsym(_glfw.x11.xlib.handle, "XDestroyRegion");
     _glfw.x11.xlib.DestroyWindow = (PFN_XDestroyWindow)
         _glfw_dlsym(_glfw.x11.xlib.handle, "XDestroyWindow");
     _glfw.x11.xlib.DisplayKeycodes = (PFN_XDisplayKeycodes)
@@ -1297,6 +1334,9 @@ int _glfwPlatformInit(void)
     _glfw.x11.xlib.utf8SetWMProperties = (PFN_Xutf8SetWMProperties)
         _glfw_dlsym(_glfw.x11.xlib.handle, "Xutf8SetWMProperties");
 
+    if (_glfw.x11.xlib.utf8LookupString && _glfw.x11.xlib.utf8SetWMProperties)
+        _glfw.x11.xlib.utf8 = GLFW_TRUE;
+
     XInitThreads();
     XrmInitialize();
 
@@ -1330,7 +1370,7 @@ int _glfwPlatformInit(void)
     _glfw.x11.helperWindowHandle = createHelperWindow();
     _glfw.x11.hiddenCursorHandle = createHiddenCursor();
 
-    if (XSupportsLocale())
+    if (XSupportsLocale() && _glfw.x11.xlib.utf8)
     {
         XSetLocaleModifiers("");
 
@@ -1340,11 +1380,6 @@ int _glfwPlatformInit(void)
                                        inputMethodInstantiateCallback,
                                        NULL);
     }
-
-#if defined(__linux__)
-    if (!_glfwInitJoysticksLinux())
-        return GLFW_FALSE;
-#endif
 
     _glfwInitTimerPOSIX();
 
@@ -1438,10 +1473,6 @@ void _glfwPlatformTerminate(void)
     //       cleanup callbacks that get called by that function
     _glfwTerminateEGL();
     _glfwTerminateGLX();
-
-#if defined(__linux__)
-    _glfwTerminateJoysticksLinux();
-#endif
 
     if (_glfw.x11.xlib.handle)
     {
